@@ -1,0 +1,96 @@
+ToC
+A. Synchronization, Race Condition and Critical Section review
+B. Memory Access Model in Multi-Core CPUs
+C. Visibility
+D. "Happens Before" Link
+E. Visibility vs. Synchronization
+
+--
+A. we saw in module 'b' & 'a' that 'synchronization' is all about preventing 'race code'
+	-> [race code] -> only one thread at any given time, should be executing in 'critical section'
+		-> [critical section] -> block of code (set of instructions) that must be mutually exclusive
+	-> class vs object locks
+--
+B. Memory Access Model in Multi-Core CPUs
+	-> modern CPU Architecture - How CPU core(s) access memory
+		---------------------
+		|--- Main Memory ---|	Access to RAM in time: 100 nanoseconds | Size: ~ GBs
+		---------------------
+		|		CPU			|
+		---------------------
+		|		L3 			|	
+		---------------------
+		|	L2	|	 L2		|	Access to L2 in time: 7 nanoseconds | Size: 256KB
+		---------------------
+		|	L1	|	 L1		|	Access to L1 in time: .5 nanoseconds | Size: 32KB
+		---------------------
+		| Core1 |   Core2	| 
+		---------------------
+--
+C. Visibility: [writes made on variable in one cache are visible to others]
+	Def: "A read should return the value set the y last 'write'"
+	-> Core1 -> running producer	|	L1	| Main Memory [count = 0]
+	-> Core2 -> running consumer	|	L1	| Main Memory [count = 0]
+	NOW: producer reads the count value
+	-> Core1 -> running producer	|	L1 [count=0]	| Main Memory [count=0]
+	NOW: producer writes to the count
+	-> Core1 -> running producer	|	L1 [count=1]	| Main Memory [count=0]
+		-> Core1 is not going to update the main memory, as we learn that writing to main memory is slower as compared to L1 Cache
+	NOW: Consumer reads the count
+	-> Core2 -> running consumer	|	L1	| Main Memory [count = 0]
+		-> gona read !!!wrong value!!! if it is not synchronized
+		-> All synchronized writes are visible.
+	So to read the right value, the writing core needs to notify other cache about the write visibility
+--
+D. "Happens Before" Link
+	-> in multi-core CPU, Read and Write can happen at the same time
+	-> we need to order these operations or we need to put the timeline on these operations
+		-> CPU does not provide that
+		-> JVM Memory model handles this and tracks the timeline on read/write
+	-> [{Thread T1} -> {x=1}] & [{Thread T2} -> {r=x}]
+		-> what is the value of 'r'?
+			-> JVM solves this
+			-> 2 answers:
+				A. if there is not 'Happens Before' link between T1 & T2, then value of 'r' is UNKNOWN
+				B. if there is a 'Happens Before' link between T1 & T2, then value of 'r' is 1
+					-> [{Thread T1} -> {x=1}] -> (happens before) -> [{Thread T2} -> {r=x}]
+	-> JVM Lang. Specs.:
+		-> A 'Happens Before' link exists between:
+			all [synchronized or volatile] write(s) &
+			all [synchronized or volatile] read(s) after above
+--					
+E. Visibility vs. Synchronization
+	-> Visibility/Volatility:
+		-> Guarantees the consistency of the variables (volatile)	| weaker | visibility
+	-> Synchronization:
+		-> Guarantees the exclusive execution of the code block	| achieves ATOMICITY | prevents Race Condition | stronger
+	-> All shared variables must be accessed either in sync way or through volatile
+--
+F. False Sharing
+	-> Core Cache is divided into LINES
+	-> each line has memory of 8 longs: 64bytes
+	-> when a write happens on one line
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
